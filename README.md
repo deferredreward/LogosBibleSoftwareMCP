@@ -11,8 +11,8 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that c
 
 | Requirement | Details |
 |-------------|---------|
-| **macOS** | Required (uses macOS `open` command and AppleScript for Logos integration) |
-| **Logos Bible Software** | Installed at `/Applications/Logos.app` (tested with v48) |
+| **macOS or Windows** | macOS (tested) or Windows 10/11 |
+| **Logos Bible Software** | Installed and licensed (tested with v48) |
 | **Node.js** | v18+ (v23+ recommended for native `fetch` support) |
 | **Claude Code** | Anthropic's CLI tool ([install guide](https://docs.anthropic.com/en/docs/claude-code)) |
 | **Biblia API Key** | Free key from [bibliaapi.com](https://bibliaapi.com/) |
@@ -186,11 +186,14 @@ The MCP server integrates with Logos through three channels:
 
 ## Logos Data Path
 
-The server expects Logos data at:
+The server auto-detects the platform and looks for Logos data at:
 
-```
-~/Library/Application Support/Logos4/Documents/a3wo155q.w14/
-```
+| Platform | Default path |
+|----------|-------------|
+| **macOS** | `~/Library/Application Support/Logos4/Documents/<user-id>/` |
+| **Windows** | `%LOCALAPPDATA%\Logos4\Documents\<user-id>\` |
+
+The `<user-id>` folder (e.g. `a3wo155q.w14`) is unique to your Logos account. The server is pre-configured with the owner's ID — other users will need to override it.
 
 If your Logos data is at a different path, set the `LOGOS_DATA_DIR` environment variable in `.mcp.json`. The library catalog lives under `Data/` (not `Documents/`) — set `LOGOS_CATALOG_DIR` if your catalog path differs:
 
@@ -202,19 +205,28 @@ If your Logos data is at a different path, set the `LOGOS_DATA_DIR` environment 
       "args": ["logos-mcp-server/dist/index.js"],
       "env": {
         "BIBLIA_API_KEY": "your_key",
-        "LOGOS_DATA_DIR": "/path/to/your/Logos4/Documents/xxxx.w14",
-        "LOGOS_CATALOG_DIR": "/path/to/your/Logos4/Data/xxxx.w14"
+        "LOGOS_DATA_DIR": "C:\\Users\\you\\AppData\\Local\\Logos4\\Documents\\xxxx.w14",
+        "LOGOS_CATALOG_DIR": "C:\\Users\\you\\AppData\\Local\\Logos4\\Data\\xxxx.w14"
       }
     }
   }
 }
 ```
 
+**To find your user-id folder on Windows:**
+```powershell
+Get-ChildItem "$env:LOCALAPPDATA\Logos4\Documents" | Where-Object { $_.Name -match '\.w14$' }
+```
+
 ## Troubleshooting
 
 **"BIBLIA_API_KEY is not set"** - Make sure your `.mcp.json` has the `env` block with your API key.
 
-**"Database not found"** - Your Logos data path may differ. Run `find ~/Library/Application\ Support/Logos4 -name "*.db" -maxdepth 5` to find your databases and update `LOGOS_DATA_DIR`.
+**"Database not found"** - Your Logos data path may differ.
+- macOS: `find ~/Library/Application\ Support/Logos4 -name "*.db" -maxdepth 5`
+- Windows: `Get-ChildItem "$env:LOCALAPPDATA\Logos4" -Recurse -Filter "*.db" -Depth 4`
+
+Update `LOGOS_DATA_DIR` (and `LOGOS_CATALOG_DIR`) in `.mcp.json` with the correct path.
 
 **Tools don't appear in `/mcp`** - Restart Claude Code. The MCP server is loaded at startup from `.mcp.json`.
 

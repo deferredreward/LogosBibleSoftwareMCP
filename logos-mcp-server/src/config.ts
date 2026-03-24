@@ -3,30 +3,28 @@ import { join } from "path";
 
 // ─── Logos Data Paths ────────────────────────────────────────────────────────
 
-const LOGOS_BASE = join(
-  homedir(),
-  "Library",
-  "Application Support",
-  "Logos4",
-  "Documents",
-  "a3wo155q.w14"
-);
+function getLogosBase(): string {
+  if (process.platform === "win32") {
+    const localAppData = process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local");
+    return join(localAppData, "Logos4", "Documents", "a3wo155q.w14");
+  }
+  return join(homedir(), "Library", "Application Support", "Logos4", "Documents", "a3wo155q.w14");
+}
+
+function getLogosCatalogBase(): string {
+  if (process.platform === "win32") {
+    const localAppData = process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local");
+    return join(localAppData, "Logos4", "Data", "a3wo155q.w14");
+  }
+  return join(homedir(), "Library", "Application Support", "Logos4", "Data", "a3wo155q.w14");
+}
 
 export const LOGOS_DATA_DIR =
-  process.env.LOGOS_DATA_DIR ?? LOGOS_BASE;
+  process.env.LOGOS_DATA_DIR ?? getLogosBase();
 
 // Catalog DB lives under Data/ (not Documents/)
-const LOGOS_CATALOG_BASE = join(
-  homedir(),
-  "Library",
-  "Application Support",
-  "Logos4",
-  "Data",
-  "a3wo155q.w14"
-);
-
 export const LOGOS_CATALOG_DIR =
-  process.env.LOGOS_CATALOG_DIR ?? LOGOS_CATALOG_BASE;
+  process.env.LOGOS_CATALOG_DIR ?? getLogosCatalogBase();
 
 export const DB_PATHS = {
   visualMarkup: join(LOGOS_DATA_DIR, "VisualMarkup", "visualmarkup.db"),

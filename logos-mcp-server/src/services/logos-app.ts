@@ -7,7 +7,11 @@ const execFileAsync = promisify(execFile);
 
 async function openUrl(url: string): Promise<LogosCommandResult> {
   try {
-    await execFileAsync("open", [url]);
+    if (process.platform === "win32") {
+      await execFileAsync("cmd", ["/c", "start", "", url]);
+    } else {
+      await execFileAsync("open", [url]);
+    }
     return { success: true, command: url };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -74,6 +78,12 @@ export async function searchAll(query: string): Promise<LogosCommandResult> {
 
 export async function isLogosRunning(): Promise<boolean> {
   try {
+    if (process.platform === "win32") {
+      const { stdout } = await execFileAsync("tasklist", [
+        "/FI", "IMAGENAME eq Logos.exe", "/NH",
+      ]);
+      return stdout.toLowerCase().includes("logos.exe");
+    }
     const { stdout } = await execFileAsync("osascript", [
       "-e",
       'tell application "System Events" to (name of processes) contains "Logos"',
